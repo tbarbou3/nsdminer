@@ -57,6 +57,20 @@ struct NF5_FLOW {
 #define NF5_MAXPACKET_SIZE	(sizeof(struct NF5_HEADER) + \
 				 (NF5_MAXFLOWS * sizeof(struct NF5_FLOW)))
 
+/* Format a time in an ISOish format */
+static const char *
+format_time(time_t t)
+{
+	struct tm *tm;
+	static char buf[32];
+
+	tm = gmtime(&t);
+	strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", tm);
+
+	return (buf);
+
+}
+
 /*
  * Given an array of expired flows, send netflow v5 report packets
  * Returns number of packets sent or -1 on error
@@ -116,12 +130,8 @@ send_netflow_v5(struct FLOW **flows, int num_flows, int nfsock, u_int16_t ifidx,
 			flw->dest_port = flows[i]->port[1];
 			flw->flow_packets = htonl(flows[i]->packets[0]);
 			flw->flow_octets = htonl(flows[i]->octets[0]);
-			flw->flow_start =
-			    htonl(timeval_sub_ms(&flows[i]->flow_start,
-			    system_boot_time));
-			flw->flow_finish =
-			    htonl(timeval_sub_ms(&flows[i]->flow_last,
-			    system_boot_time));
+			flw->flow_start =   htonl(flows[i]->flow_start.tv_sec);
+			flw->flow_finish = htonl(flows[i]->flow_last.tv_sec);
 			flw->tcp_flags = flows[i]->tcp_flags[0];
 			flw->protocol = flows[i]->protocol;
 			flw->tos = (flows[i]->flow_dir==0)?1:0;
@@ -140,12 +150,8 @@ send_netflow_v5(struct FLOW **flows, int num_flows, int nfsock, u_int16_t ifidx,
 			flw->dest_port = flows[i]->port[0];
 			flw->flow_packets = htonl(flows[i]->packets[1]);
 			flw->flow_octets = htonl(flows[i]->octets[1]);
-			flw->flow_start =
-			    htonl(timeval_sub_ms(&flows[i]->flow_start,
-			    system_boot_time));
-			flw->flow_finish =
-			    htonl(timeval_sub_ms(&flows[i]->flow_last,
-			    system_boot_time));
+			flw->flow_start =   htonl(flows[i]->flow_start.tv_sec);
+			flw->flow_finish = htonl(flows[i]->flow_last.tv_sec);
 			flw->tcp_flags = flows[i]->tcp_flags[1];
 			flw->protocol = flows[i]->protocol;
                         flw->tos = (flows[i]->flow_dir==1)?1:0;
@@ -170,6 +176,7 @@ send_netflow_v5(struct FLOW **flows, int num_flows, int nfsock, u_int16_t ifidx,
 	}
 
 	*flows_exported += j;
+
 	return (num_packets);
 }
 
