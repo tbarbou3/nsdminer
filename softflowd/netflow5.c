@@ -57,20 +57,6 @@ struct NF5_FLOW {
 #define NF5_MAXPACKET_SIZE	(sizeof(struct NF5_HEADER) + \
 				 (NF5_MAXFLOWS * sizeof(struct NF5_FLOW)))
 
-/* Format a time in an ISOish format */
-static const char *
-format_time(time_t t)
-{
-	struct tm *tm;
-	static char buf[32];
-
-	tm = gmtime(&t);
-	strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", tm);
-
-	return (buf);
-
-}
-
 /*
  * Given an array of expired flows, send netflow v5 report packets
  * Returns number of packets sent or -1 on error
